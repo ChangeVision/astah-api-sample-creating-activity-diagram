@@ -41,7 +41,7 @@ public class CreatingSampleActivityDiagram {
             TransactionManager.endTransaction();
             projectAccessor.save();
 
-            System.out.println("Done createing the sample activity diagram.");
+            System.out.println("Done creating the sample activity diagram.");
         } catch (InvalidEditingException e) {
             e.printStackTrace();
         } catch (InvalidUsingException e) {
