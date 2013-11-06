@@ -1,9 +1,11 @@
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 
 import com.change_vision.jude.api.inf.AstahAPI;
 import com.change_vision.jude.api.inf.editor.ActivityDiagramEditor;
 import com.change_vision.jude.api.inf.editor.BasicModelEditor;
+import com.change_vision.jude.api.inf.editor.IDiagramEditorFactory;
 import com.change_vision.jude.api.inf.editor.ModelEditorFactory;
 import com.change_vision.jude.api.inf.editor.TransactionManager;
 import com.change_vision.jude.api.inf.exception.InvalidEditingException;
@@ -28,7 +30,7 @@ public class CreatingSampleActivityDiagram {
     }
 
     public void run(String projectName) throws ClassNotFoundException, LicenseNotFoundException,
-    ProjectNotFoundException, IOException, ProjectLockedException {
+            ProjectNotFoundException, IOException, ProjectLockedException {
         ProjectAccessor projectAccessor = AstahAPI.getAstahAPI().getProjectAccessor();
         try {
             projectAccessor.create(projectName);
@@ -50,69 +52,79 @@ public class CreatingSampleActivityDiagram {
         }
     }
 
-    private void createActivityDiagram() throws InvalidEditingException, ClassNotFoundException, ProjectNotFoundException, InvalidUsingException {
+    private void createActivityDiagram() throws InvalidEditingException, ClassNotFoundException,
+            ProjectNotFoundException, InvalidUsingException {
         ProjectAccessor projectAccessor = AstahAPI.getAstahAPI().getProjectAccessor();
         IModel project = projectAccessor.getProject();
 
         BasicModelEditor modelEditor = ModelEditorFactory.getBasicModelEditor();
         IPackage samplePackage = modelEditor.createPackage(project, "Sample");
 
-        ActivityDiagramEditor diagramEditor = projectAccessor.getDiagramEditorFactory().getActivityDiagramEditor();
+        IDiagramEditorFactory diagramEditorFactory = projectAccessor.getDiagramEditorFactory();
+        ActivityDiagramEditor diagramEditor = diagramEditorFactory.getActivityDiagramEditor();
         diagramEditor.createActivityDiagram(samplePackage, "SampleActivityDiagram");
 
-        INodePresentation partition0 = diagramEditor.createPartition(null, null, "Partion0", false);
+        INodePresentation partition0 = diagramEditor.createPartition(null, null, "partition0", false);
         partition0.setWidth(300);
-        INodePresentation partition1 = diagramEditor.createPartition(null, partition0, "Partion1", false);
+        INodePresentation partition1 = diagramEditor.createPartition(null, partition0, "partition1", false);
         partition1.setWidth(300);
-        INodePresentation partition2 = diagramEditor.createPartition(null, partition1, "Partion2", false);
+        INodePresentation partition2 = diagramEditor.createPartition(null, partition1, "partition2", false);
         partition2.setWidth(300);
-        INodePresentation partition01 = diagramEditor.createPartition(partition0, null, "Partion01", false);
-        INodePresentation partition00 = diagramEditor.createPartition(null, null, "Partion00", true);
+        INodePresentation partition01 = diagramEditor.createPartition(partition0, null, "partition01", false);
+        INodePresentation partition00 = diagramEditor.createPartition(null, null, "partition00", true);
         partition00.setHeight(250);
-        INodePresentation partition10 = diagramEditor.createPartition(null, partition00, "Partion10", true);
+        INodePresentation partition10 = diagramEditor.createPartition(null, partition00, "partition10", true);
         partition10.setHeight(250);
 
+        Rectangle2D p01Rect = partition01.getRectangle();
         INodePresentation initialNode = diagramEditor.createInitialNode("InitialNode",
-                new Point2D.Double(partition01.getRectangle().getCenterX() - 10, partition01.getRectangle().getMinY() + 80)); 
+                new Point2D.Double(p01Rect.getCenterX() - 10, p01Rect.getMinY() + 80));
 
+        Rectangle2D initialRect = initialNode.getRectangle();
         INodePresentation action0 = diagramEditor.createAction("Action0",
-                new Point2D.Double(partition01.getRectangle().getCenterX() - 40, initialNode.getRectangle().getMaxY() + 50)); 
+                new Point2D.Double(p01Rect.getCenterX() - 40, initialRect.getMaxY() + 50));
+        Rectangle2D action0Rect = action0.getRectangle();
         INodePresentation pin0 = diagramEditor.createPin("Pin0", null, false, action0,
-                new Point2D.Double(action0.getRectangle().getMaxX(), action0.getRectangle().getCenterY() - 5));
+                new Point2D.Double(action0Rect.getMaxX(), action0Rect.getCenterY() - 5));
 
         diagramEditor.createFlow(initialNode, action0);
 
         INodePresentation object0 = diagramEditor.createObjectNode("Object0", null,
-                new Point2D.Double(partition01.getRectangle().getMaxX() - 30, action0.getRectangle().getMinY()));
+                new Point2D.Double(p01Rect.getMaxX() - 30, action0Rect.getMinY()));
 
         diagramEditor.createFlow(pin0, object0);
 
+        Rectangle2D p1Rect = partition1.getRectangle();
+        Point2D action0Loc = action0.getLocation();
         INodePresentation action1 = diagramEditor.createAction("Action1",
-                new Point2D.Double(partition1.getRectangle().getCenterX() - 40, action0.getLocation().getY())); 
+                new Point2D.Double(p1Rect.getCenterX() - 40, action0Loc.getY()));
+        Rectangle2D act1Rect = action1.getRectangle();
         INodePresentation pin1 = diagramEditor.createPin("Pin1", null, true, action1,
-                new Point2D.Double(action1.getRectangle().getMinX(), action1.getRectangle().getCenterY() - 5));
+                new Point2D.Double(act1Rect.getMinX(), act1Rect.getCenterY() - 5));
 
         diagramEditor.createFlow(object0, pin1);
 
         INodePresentation mergeNode0 = diagramEditor.createDecisionMergeNode(null,
-                new Point2D.Double(action1.getRectangle().getCenterX() - 15, action1.getRectangle().getMaxY() + 50));
+                new Point2D.Double(act1Rect.getCenterX() - 15, act1Rect.getMaxY() + 50));
 
         diagramEditor.createFlow(action1, mergeNode0);
 
+        Point2D p10Loc = partition10.getLocation();
         INodePresentation action2 = diagramEditor.createAction("Action2",
-                new Point2D.Double(partition1.getRectangle().getCenterX() - 40, partition10.getLocation().getY() + 50));
+                new Point2D.Double(p1Rect.getCenterX() - 40, p10Loc.getY() + 50));
 
         ILinkPresentation flow2 = diagramEditor.createFlow(mergeNode0, action2);
-        ((IFlow)flow2.getModel()).setGuard("To do Action2");
+        ((IFlow) flow2.getModel()).setGuard("To do Action2");
 
+        Rectangle2D p2Rect = partition2.getRectangle();
         INodePresentation action3 = diagramEditor.createAction("Action3",
-                new Point2D.Double(partition2.getRectangle().getCenterX() - 40, partition10.getLocation().getY() + 50));
+                new Point2D.Double(p2Rect.getCenterX() - 40, p10Loc.getY() + 50));
 
         ILinkPresentation flow3 = diagramEditor.createFlow(mergeNode0, action3);
-        ((IFlow)flow3.getModel()).setGuard("To do Action3");
+        ((IFlow) flow3.getModel()).setGuard("To do Action3");
 
         INodePresentation finaleNode = diagramEditor.createFinalNode("FinalNode",
-                new Point2D.Double(partition2.getRectangle().getCenterX() - 10, partition2.getRectangle().getMaxY() - 50)); 
+                new Point2D.Double(p2Rect.getCenterX() - 10, p2Rect.getMaxY() - 50));
 
         diagramEditor.createFlow(action3, finaleNode);
     }
